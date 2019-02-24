@@ -15,6 +15,6 @@ $(COBJS): %.o: %.c
 	$(CC) $(CFLAGS) $< -o $@
 
 clean:
-	rm *.o keytar.exe
+	del keytar.o keytar.exe hidapi\windows\hid.o
 
 .PHONY: clean
