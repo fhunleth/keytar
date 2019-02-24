@@ -160,7 +160,7 @@ static void dump_buffer(const char *msg, unsigned char *buf, int len)
 		printf("%02hhx ", buf[i]);
 	printf("\n");
 	#ifdef WIN32
-		Sleep(500);
+		//Sleep(500);
 	#else
 		//usleep(1000);
 	#endif
@@ -178,8 +178,6 @@ static int count_bits(int n)
 
 static void decode(unsigned char *buf, int len)
 {
-	// 00 00 08 80 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 e0 00 0b
-
 	if (len != 27) {
 		dump_buffer("len?", buf, len);
 		return;
@@ -193,25 +191,39 @@ static void decode(unsigned char *buf, int len)
 	if (memcmp(buf, code_key_press, sizeof(code_key_press)) == 0) {
 		int keys = (buf[5] << 17) | (buf[6] << 9) | (buf[7] << 1);
 
-		unsigned char key_pressure[5];
-		memcpy(key_pressure, &buf[8], 5);
+		unsigned char key_velocity[5];
+		memcpy(key_velocity, &buf[8], 5);
 		int keys_pressed = 0;
-		for (int i = 0; i < sizeof(key_pressure); i++) {
-			if (key_pressure[i] > 0)
+		for (int i = 0; i < sizeof(key_velocity); i++) {
+			if (key_velocity[i] > 0)
 				keys_pressed++;
 		}
 		if (count_bits(keys) < keys_pressed) {
-			// c6 is pressed
+			// Special case for c5
 			keys = keys | 1;
+			key_velocity[0] -= 128;
+		}
+
+        unsigned char pitch_mod = buf[15];
+		if (pitch_mod != 0) {
+			printf("Pitch mod %d\n", pitch_mod);
 		}
 
 		int delta_keys = keys ^ previous_keys;
+		int velocity_index = keys_pressed - 1;
 		for (int i = 0; i < 25; i++) {
 			int key_pressed = keys & (1 << i);
 			if (delta_keys & (1 << i)) {
-				press_key(key_infos[i].event, key_pressed ? PR_PRESSED : PR_RELEASED);
-				printf("Key %s %s\n", key_infos[i].name, key_pressed ? "pressed" : "released");
+				if (key_pressed) {
+					press_key(key_infos[i].event, PR_PRESSED);
+					printf("Key %s pressed - velocity %d\n", key_infos[i].name, key_velocity[velocity_index]);
+				} else {
+					press_key(key_infos[i].event, PR_RELEASED);
+					printf("Key %s released\n", key_infos[i].name, key_pressed ? "pressed" : "released");
+				}
 			}
+			if (key_pressed)
+				velocity_index--;
 		}
 		previous_keys = keys;
 	} else if (memcmp(buf, code_up, sizeof(code_up)) == 0) {
@@ -258,11 +270,12 @@ int main(int argc, char* argv[])
 
 	hid_device *handle = hid_open(0x1bad, 0x3330, NULL);
 	if (!handle) {
-		printf("Can't find the keytar. Make sure that it's plugged in.\n");
+		printf("Can't find the keytar. Make sure that its USB receiver is plugged in.\n");
  		return 1;
 	}
 
-    printf("Ready to receive events from the keytar. Press CTRL+C to exit.\n");
+    printf("Press the keyboard button on the keytar to wake it up.\n");
+	printf("When you're done, press CTRL+C here to exit.\n");
     for (;;) {
         unsigned char buf[256];
 		int res = 0;
