@@ -1,0 +1,20 @@
+all: keytar.exe
+
+CC=gcc
+CXX=g++
+COBJS=keytar.o hidapi/windows/hid.o
+OBJS=$(COBJS) $(CPPOBJS)
+CFLAGS=-Ihidapi/hidapi -g -c
+LIBS= -lsetupapi
+DLL_LDFLAGS = -mwindows -lsetupapi
+
+keytar.exe: $(OBJS)
+	g++ -g $^ $(LIBS) -o keytar
+
+$(COBJS): %.o: %.c
+	$(CC) $(CFLAGS) $< -o $@
+
+clean:
+	rm *.o keytar.exe
+
+.PHONY: clean

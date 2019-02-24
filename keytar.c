@@ -29,31 +29,31 @@ struct key_info {
 };
 
 static struct key_info key_infos[] = {
-{"c6",  'y', 84},
-{"b5",  'x', 83},
-{"a5#", 'w', 82},
-{"a5",  'v', 81},
-{"g5#", 'u', 80},
-{"g5",  't', 79},
-{"f5#", 's', 78},
-{"f5",  'r', 77},
-{"e5",  'q', 76},
-{"d5#", 'p', 75},
-{"d5",  'o', 74},
-{"c5#", 'n', 73},
-{"c5",  'm', 72},
-{"b4",  'l', 71},
-{"a4#", 'k', 70},
-{"a4",  'j', 69},
-{"g4#", 'i', 68},
-{"g4",  'h', 67},
-{"f4#", 'g', 66},
-{"f4",  'f', 65},
-{"e4",  'e', 64},
-{"d4#", 'd', 63},
-{"d4",  'c', 62},
-{"c4#", 'b', 61},
-{"c4",  'a', 60}
+{"c5",  'y', 72},
+{"b4",  'x', 71},
+{"a4#", 'w', 70},
+{"a4",  'v', 69},
+{"g4#", 'u', 68},
+{"g4",  't', 67},
+{"f4#", 's', 66},
+{"f4",  'r', 65},
+{"e4",  'q', 64},
+{"d4#", 'p', 63},
+{"d4",  'o', 62},
+{"c4#", 'n', 61},
+{"c4",  'm', 60},
+{"b3",  'l', 59},
+{"a3#", 'k', 58},
+{"a3",  'j', 57},
+{"g3#", 'i', 56},
+{"g3",  'h', 55},
+{"f3#", 'g', 54},
+{"f3",  'f', 53},
+{"e3",  'e', 52},
+{"d3#", 'd', 51},
+{"d3",  'c', 50},
+{"c3#", 'b', 49},
+{"c3",  'a', 48}
 };
 
 static void dump_buffer(const char *msg, unsigned char *buf, int len)
@@ -80,6 +80,18 @@ static int count_bits(int n)
     return n;
 }
 
+const char code_key_press[] = {0x00, 0x00, 0x08, 0x80, 0x80};
+const char code_up[] =    {0x00, 0x00, 0x00, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_right[] = {0x00, 0x00, 0x02, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_down[] =  {0x00, 0x00, 0x04, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_left[] =  {0x00, 0x00, 0x06, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_minus[] = {0x00, 0x01, 0x08, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_plus[] =  {0x00, 0x02, 0x08, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_1[] =     {0x01, 0x00, 0x08, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_2[] =     {0x08, 0x00, 0x08, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_A[] =     {0x02, 0x00, 0x08, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+const char code_B[] =     {0x04, 0x00, 0x08, 0x80, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x7f};
+
 static void decode(unsigned char *buf, int len)
 {
 	// 00 00 08 80 80 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 00 e0 00 0b
@@ -94,7 +106,7 @@ static void decode(unsigned char *buf, int len)
 	counter = buf[25];
 
 	// Check for key press/release
-	if (buf[0] == 0x00 && buf[1] == 0x00 && buf[2] == 0x08 && buf[3] == 0x80 && buf[4] == 0x80) {
+	if (memcmp(buf, code_key_press, sizeof(code_key_press)) == 0) {
 		int keys = (buf[5] << 17) | (buf[6] << 9) | (buf[7] << 1);
 
 		unsigned char key_pressure[5];
@@ -117,6 +129,26 @@ static void decode(unsigned char *buf, int len)
 			}
 		}
 		previous_keys = keys;
+	} else if (memcmp(buf, code_up, sizeof(code_up)) == 0) {
+		printf("Up\n");
+	} else if (memcmp(buf, code_down, sizeof(code_down)) == 0) {
+		printf("Down\n");
+	} else if (memcmp(buf, code_right, sizeof(code_right)) == 0) {
+		printf("Right\n");
+	} else if (memcmp(buf, code_left, sizeof(code_left)) == 0) {
+		printf("Left\n");
+	} else if (memcmp(buf, code_minus, sizeof(code_minus)) == 0) {
+		printf("-\n");
+	} else if (memcmp(buf, code_plus, sizeof(code_plus)) == 0) {
+		printf("+\n");
+	} else if (memcmp(buf, code_1, sizeof(code_1)) == 0) {
+		printf("1\n");
+	} else if (memcmp(buf, code_2, sizeof(code_2)) == 0) {
+		printf("2\n");
+	} else if (memcmp(buf, code_A, sizeof(code_A)) == 0) {
+		printf("A\n");
+	} else if (memcmp(buf, code_B, sizeof(code_B)) == 0) {
+		printf("B\n");
 	} else {
 		dump_buffer("unknown", buf, len);
 	}
@@ -124,45 +156,32 @@ static void decode(unsigned char *buf, int len)
 
 int main(int argc, char* argv[])
 {
-	int res;
-	unsigned char buf[256];
-	#define MAX_STR 255
-	wchar_t wstr[MAX_STR];
-	hid_device *handle;
-	int i;
+	if (hid_init()) {
+		printf("hid_init failed?\n");
+		return 1;
+	}
 
-#ifdef WIN32
-	UNREFERENCED_PARAMETER(argc);
-	UNREFERENCED_PARAMETER(argv);
-#endif
-
-	if (hid_init())
-		return -1;
-
-	handle = hid_open(0x1bad, 0x3330, NULL);
+	hid_device *handle = hid_open(0x1bad, 0x3330, NULL);
 	if (!handle) {
-		printf("Can't find the keytar\n");
+		printf("Can't find the keytar. Make sure that it's plugged in.\n");
  		return 1;
 	}
 
-
-
-        for (;;) {
-	// Read requested state. hid_read() has been set to be
-	// non-blocking by the call to hid_set_nonblocking() above.
-	// This loop demonstrates the non-blocking nature of hid_read().
-	res = 0;
-	while (res == 0) {
-		res = hid_read(handle, buf, sizeof(buf));
-		if (res == 0)
-			printf("waiting...\n");
-		if (res < 0) {
-			printf("Unable to read()\n");
-			goto cleanup;
+    printf("Ready to receive events from the keytar. Press CTRL+C to exit.\n");
+    for (;;) {
+        unsigned char buf[256];
+		int res = 0;
+		while (res == 0) {
+			res = hid_read(handle, buf, sizeof(buf));
+			if (res == 0)
+				printf("waiting?\n");
+			if (res < 0) {
+				printf("Unable to read()\n");
+				goto cleanup;
+			}
 		}
-	}
 
-	decode(buf, res);
+		decode(buf, res);
 	}
 
 cleanup:
